@@ -45,7 +45,8 @@
         <p>© <span id="copyrightYear"></span> <span id="copyrightName"></span></p>
     </footer>
 
-    <script src="js/shared.js"></script> <script>
+    <script src="js/shared.js"></script>
+    <script>
         document.addEventListener('DOMContentLoaded', () => {
             const user = JSON.parse(sessionStorage.getItem('loggedInUser'));
             if (!user || !user.group || !checkPagePermission(user.group, 'fine_form.html')) {
@@ -64,8 +65,7 @@
 
             // Populate member names from house list
             function populateMemberNames() {
-                // แก้ไขการสะกดชื่อฟังก์ชันจาก getHouselist เป็น getHouseList
-                const houseMembers = getHouseList(); 
+                const houseMembers = gethouselist(); // เปลี่ยนเป็น gethouselist()
                 memberNameSelect.innerHTML = '<option value="" disabled selected>เลือกชื่อสมาชิก</option>';
                 houseMembers.forEach(member => {
                     const option = document.createElement('option');
