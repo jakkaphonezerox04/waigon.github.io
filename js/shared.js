@@ -12,11 +12,11 @@ const DEFAULT_WEBSITE_SETTINGS = {
     "leaveTypes": ["Airdrop", "ลาประชุม", "ลาธุระ", "ลาป่วย"],
     "availableGroups": ["member", "staff", "admin"],
     "groupPermissions": {
-        "admin": ["admin.html", "user.html", "staff.html", "leave_form.html", "delivery_form.html", "report_form.html", "house_list.html", "fine_form.html"], // เพิ่ม fine_form.html
-        "staff": ["user.html", "staff.html", "leave_form.html", "delivery_form.html", "report_form.html", "house_list.html", "fine_form.html"], // เพิ่ม fine_form.html
+        "admin": ["admin.html", "user.html", "staff.html", "leave_form.html", "delivery_form.html", "report_form.html", "house_list.html", "fine_form.html"],
+        "staff": ["user.html", "staff.html", "leave_form.html", "delivery_form.html", "report_form.html", "house_list.html", "fine_form.html"],
         "member": ["user.html", "leave_form.html", "delivery_form.html", "report_form.html"]
     },
-    "fineList": [ // เพิ่มรายการปรับเริ่มต้น
+    "fineList": [
         {"name": "วิ่งแก้บน", "amount": 500},
         {"name": "นอนเวลางาน", "amount": 1000}
     ],
@@ -183,6 +183,16 @@ function checkPagePermission(userGroup, pageFileName) {
     return allowedPages.includes(pageFileName);
 }
 
+// --- NEW FUNCTIONS FOR HOUSE LIST ---
+
+function gethouselist() { // เปลี่ยน L เป็น l ที่นี่
+    return JSON.parse(localStorage.getItem('houseList')) || []; // เปลี่ยน key เป็น 'houseList' (L ใหญ่)
+}
+
+function saveHouseList(houseList) {
+    localStorage.setItem('houseList', JSON.stringify(houseList)); // key เป็น 'houseList' (L ใหญ่)
+}
+
 // --- NEW FUNCTIONS FOR FINE LIST AND FINE HISTORY ---
 
 function getFineList() {
@@ -190,7 +200,6 @@ function getFineList() {
     return settings.fineList || [];
 }
 
-// Note: saveFineList() directly modifies settings and saves them
 function saveFineList(fineList) {
     let settings = getSettings();
     settings.fineList = fineList;
