@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="websiteTitle">แจ้งปรับ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-gray-900">
+    <div class="form-container" style="max-width: 500px;">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="form-title">💸 แจ้งปรับ</h2>
+            <button id="backToStaffMenuBtn" class="button-secondary text-sm">กลับสู่เมนู Staff</button>
+        </div>
+        
+        <form id="fineForm">
+            <div class="mb-4">
+                <label for="memberNameSelect" class="form-label">ชื่อคนในบ้าน:</label>
+                <select id="memberNameSelect" class="select-field">
+                    <option value="" disabled selected>เลือกชื่อสมาชิก</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label for="fineItemSelect" class="form-label">รายการปรับ:</label>
+                <select id="fineItemSelect" class="select-field">
+                    <option value="" disabled selected>เลือกรายการปรับ</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label for="fineAmount" class="form-label">จำนวนเงินที่ปรับ:</label>
+                <input type="text" id="fineAmount" class="input-field" readonly>
+            </div>
+            <div class="mb-4">
+                <label for="fineReason" class="form-label">เหตุผลเพิ่มเติม (ถ้ามี):</label>
+                <textarea id="fineReason" rows="3" placeholder="ระบุเหตุผลเพิ่มเติม" class="textarea-field"></textarea>
+            </div>
+            <button type="button" id="submitFineBtn" class="button-primary w-full">ส่งแจ้งปรับ</button>
+            <div id="messageBox" class="message-box mt-4"></div>
+        </form>
+    </div>
+    
+    <footer class="mt-8 py-4 px-6 text-center text-gray-300">
+        <p>© <span id="copyrightYear"></span> <span id="copyrightName"></span></p>
+    </footer>
+
+    <script src="js/shared.js"></script> <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = JSON.parse(sessionStorage.getItem('loggedInUser'));
+            if (!user || !user.group || !checkPagePermission(user.group, 'fine_form.html')) {
+                window.location.href = 'login.html';
+                return;
+            }
+            applyThemeSettings();
+            let settings = getSettings();
+            
+            const memberNameSelect = document.getElementById('memberNameSelect');
+            const fineItemSelect = document.getElementById('fineItemSelect');
+            const fineAmountInput = document.getElementById('fineAmount');
+            const fineReasonInput = document.getElementById('fineReason');
+            const submitFineBtn = document.getElementById('submitFineBtn');
+            const messageBox = document.getElementById('messageBox');
+
+            // Populate member names from house list
+            function populateMemberNames() {
+                // แก้ไขการสะกดชื่อฟังก์ชันจาก getHouselist เป็น getHouseList
+                const houseMembers = getHouseList(); 
+                memberNameSelect.innerHTML = '<option value="" disabled selected>เลือกชื่อสมาชิก</option>';
+                houseMembers.forEach(member => {
+                    const option = document.createElement('option');
+                    option.value = member.name;
+                    option.textContent = member.name;
+                    memberNameSelect.appendChild(option);
+                });
+            }
+
+            // Populate fine items from settings
+            function populateFineItems() {
+                const fineList = getFineList();
+                fineItemSelect.innerHTML = '<option value="" disabled selected>เลือกรายการปรับ</option>';
+                fineList.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.name;
+                    option.textContent = `${item.name} (฿${item.amount})`;
+                    fineItemSelect.appendChild(option);
+                });
+            }
+
+            // Update fine amount based on selected item
+            fineItemSelect.addEventListener('change', () => {
+                const selectedFineName = fineItemSelect.value;
+                const fineDetails = getFineDetails(selectedFineName);
+                if (fineDetails) {
+                    fineAmountInput.value = fineDetails.amount;
+                } else {
+                    fineAmountInput.value = '';
+                }
+            });
+
+            submitFineBtn.addEventListener('click', async () => {
+                const memberName = memberNameSelect.value;
+                const fineItemName = fineItemSelect.value;
+                const fineAmount = fineAmountInput.value;
+                const fineReason = fineReasonInput.value.trim();
+
+                if (!memberName || !fineItemName || !fineAmount) {
+                    showMessage(messageBox, 'กรุณาเลือกชื่อสมาชิกและรายการปรับ', true);
+                    return;
+                }
+                
+                const fineData = {
+                    memberName: memberName,
+                    fineItem: fineItemName,
+                    amount: fineAmount,
+                    reason: fineReason,
+                    timestamp: new Date().getTime(),
+                    staffUser: user.username
+                };
+
+                let fineHistory = getFineHistory();
+                fineHistory.push(fineData);
+                saveFineHistory(fineHistory);
+
+                const webhookUrl = settings.webhookUrl;
+                if (!webhookUrl) { return showMessage(messageBox, 'ผู้ดูแลยังไม่ได้ตั้งค่า Webhook สำหรับการปรับ', true); }
+
+                showMessage(messageBox, 'กำลังส่งแจ้งปรับ...', false);
+
+                const payload = {
+                    username: settings.websiteName || "ระบบแจ้งปรับ",
+                    avatar_url: settings.logoImageUrl || "",
+                    embeds: [{
+                        title: "💸 รายการแจ้งปรับใหม่",
+                        description: `**ปรับสมาชิก:** ${fineData.memberName}\n**รายการ:** ${fineData.fineItem}\n**จำนวนเงิน:** ฿${fineData.amount}`,
+                        color: parseInt(settings.themeAccentColor.replace('#', ''), 16),
+                        fields: [
+                            { name: "ชื่อผู้ถูกปรับ", value: fineData.memberName, inline: true },
+                            { name: "รายการปรับ", value: fineData.fineItem, inline: true },
+                            { name: "จำนวนเงิน", value: `฿${fineData.amount}`, inline: true },
+                            { name: "เหตุผลเพิ่มเติม", value: fineData.reason || "ไม่มี", inline: false }
+                        ],
+                        footer: { text: `แจ้งปรับโดย: ${fineData.staffUser}` },
+                        timestamp: new Date().toISOString()
+                    }]
+                };
+
+                try {
+                    await sendDiscordWebhook(webhookUrl, payload);
+                    showMessage(messageBox, 'ส่งแจ้งปรับสำเร็จ!', false);
+                    document.getElementById('fineForm').reset();
+                    fineAmountInput.value = '';
+                } catch (error) {
+                    console.error('Failed to send webhook:', error);
+                    showMessage(messageBox, 'เกิดข้อผิดพลาดในการส่งแจ้งปรับ', true);
+                }
+            });
+
+            document.getElementById('backToStaffMenuBtn').addEventListener('click', () => {
+                window.location.href = 'staff.html';
+            });
+
+            populateMemberNames();
+            populateFineItems();
+        });
+    </script>
+</body>
+</html>

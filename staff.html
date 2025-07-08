@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="websiteTitle">เมนู Staff</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-gray-900">
+    <div class="form-container" style="max-width: 500px;">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="form-title">⚙️ เมนู Staff</h2>
+            <button id="logoutBtn" class="button-secondary">ออกจากระบบ</button>
+        </div>
+        
+        <div class="text-center mb-8">
+            <p class="text-lg">สวัสดี Staff, <span id="welcomeUser" class="font-bold text-xl" style="color: var(--theme-accent-color);"></span>!</p>
+            <p class="text-gray-400">กรุณาเลือกรายการที่ต้องการทำ</p>
+        </div>
+
+        <div class="flex flex-col gap-4">
+            <button id="menuHouseListBtn" class="button-primary text-lg py-4">🏠 รายชื่อคนในบ้าน</button>
+            <button id="menuFineFormBtn" class="button-primary text-lg py-4">💸 แจ้งปรับ</button>
+            <button id="menuReportBtn" class="button-primary text-lg py-4">📢 รายงาน</button>
+            <button id="backToUserMenuBtn" class="button-secondary text-lg py-4">กลับสู่เมนูผู้ใช้ทั่วไป</button>
+        </div>
+    </div>
+    
+    <footer class="mt-8 py-4 px-6 text-center text-gray-300">
+        <p>© <span id="copyrightYear"></span> <span id="copyrightName"></span></p>
+    </footer>
+
+    <script src="js/shared.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = JSON.parse(sessionStorage.getItem('loggedInUser'));
+            if (!user || !user.group || !checkPagePermission(user.group, 'staff.html')) {
+                window.location.href = 'login.html';
+                return;
+            }
+            applyThemeSettings();
+            
+            document.getElementById('welcomeUser').textContent = user.username;
+            document.getElementById('copyrightYear').textContent = new Date().getFullYear();
+            document.getElementById('copyrightName').textContent = getSettings().websiteName;
+
+            document.getElementById('menuHouseListBtn').addEventListener('click', () => { 
+                window.location.href = 'house_list.html';
+            });
+            document.getElementById('menuFineFormBtn').addEventListener('click', () => {
+                window.location.href = 'fine_form.html';
+            });
+            document.getElementById('menuReportBtn').addEventListener('click', () => { 
+                window.location.href = 'report_form.html';
+            });
+            
+            document.getElementById('backToUserMenuBtn').addEventListener('click', () => { 
+                window.location.href = 'user.html'; 
+            });
+
+            document.getElementById('logoutBtn').addEventListener('click', () => { 
+                sessionStorage.removeItem('loggedInUser'); 
+                window.location.href = 'login.html'; 
+            });
+        });
+    </script>
+</body>
+</html>

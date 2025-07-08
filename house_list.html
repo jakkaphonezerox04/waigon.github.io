@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="websiteTitle">รายชื่อคนในบ้าน</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .online-status {
+            color: #4CAF50; /* Green */
+            font-weight: bold;
+        }
+        .offline-status {
+            color: #F44336; /* Red */
+            font-weight: bold;
+        }
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 24px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            -webkit-transition: .4s;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            -webkit-transition: .4s;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #4CAF50; /* Green for online */
+        }
+        input:focus + .slider {
+            box-shadow: 0 0 1px #4CAF50;
+        }
+        input:checked + .slider:before {
+            -webkit-transform: translateX(16px);
+            -ms-transform: translateX(16px);
+            transform: translateX(16px);
+        }
+    </style>
+</head>
+<body class="bg-gray-900">
+    <div class="form-container" style="max-width: 700px;">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="form-title">🏠 รายชื่อคนในบ้าน</h2>
+            <button id="backToStaffMenuBtn" class="button-secondary">กลับ</button>
+        </div>
+        
+        <div class="admin-section">
+            <h3 class="text-2xl font-bold text-center mb-4 text-white">เพิ่มสมาชิกใหม่</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="memberNameInput" class="form-label">ชื่อ:</label>
+                    <input type="text" id="memberNameInput" class="input-field" placeholder="ชื่อสมาชิก">
+                </div>
+                <div>
+                    <label for="memberGenderSelect" class="form-label">เพศ:</label>
+                    <select id="memberGenderSelect" class="select-field">
+                        <option value="">เลือกเพศ</option>
+                        <option value="ชาย">ชาย</option>
+                        <option value="หญิง">หญิง</option>
+                        <option value="อื่นๆ">อื่นๆ</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="memberWeaponInput" class="form-label">อาวุธที่เล่น:</label>
+                    <input type="text" id="memberWeaponInput" class="input-field" placeholder="เช่น ดาบ, ปืน">
+                </div>
+                <div class="flex items-center gap-2">
+                    <label for="memberStatusToggle" class="form-label mb-0">สถานะออนไลน์:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="memberStatusToggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+            <button id="addMemberBtn" class="button-primary w-full mt-4">เพิ่มสมาชิก</button>
+            <div id="memberMessageBox" class="message-box"></div>
+        </div>
+
+        <div class="admin-section">
+            <h3 class="text-2xl font-bold text-center mb-4 text-white">รายการสมาชิก</h3>
+            <div id="houseMembersList" class="max-h-96 overflow-y-auto p-4 rounded-lg bg-gray-900 border">
+                
+            </div>
+        </div>
+    </div>
+
+    <div id="editMemberModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 class="text-xl font-bold mb-4">แก้ไขสมาชิก</h3>
+            <div class="mb-4 text-left">
+                <label for="editedMemberNameInput" class="form-label">ชื่อ:</label>
+                <input type="text" id="editedMemberNameInput" class="input-field">
+            </div>
+            <div class="mb-4 text-left">
+                <label for="editedMemberGenderSelect" class="form-label">เพศ:</label>
+                <select id="editedMemberGenderSelect" class="select-field">
+                    <option value="">เลือกเพศ</option>
+                    <option value="ชาย">ชาย</option>
+                    <option value="หญิง">หญิง</option>
+                    <option value="อื่นๆ">อื่นๆ</option>
+                </select>
+            </div>
+            <div class="mb-4 text-left">
+                <label for="editedMemberWeaponInput" class="form-label">อาวุธที่เล่น:</label>
+                <input type="text" id="editedMemberWeaponInput" class="input-field">
+            </div>
+            <div class="flex items-center gap-2 mb-4">
+                <label for="editedMemberStatusToggle" class="form-label mb-0">สถานะออนไลน์:</label>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="editedMemberStatusToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="flex justify-center gap-4 mt-6">
+                <button id="saveEditedMemberBtn" class="button-primary px-6 py-2">บันทึก</button>
+                <button id="closeEditMemberModalBtn" class="button-secondary px-6 py-2">ยกเลิก</button>
+            </div>
+        </div>
+    </div>
+    
+    <footer class="mt-8 py-4 px-6 text-center text-gray-300">
+        <p>© <span id="copyrightYear"></span> <span id="copyrightName"></span></p>
+    </footer>
+
+    <script src="js/shared.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = JSON.parse(sessionStorage.getItem('loggedInUser'));
+            if (!user || !user.group || !checkPagePermission(user.group, 'house_list.html')) {
+                window.location.href = 'login.html';
+                return;
+            }
+            applyThemeSettings();
+            
+            document.getElementById('copyrightYear').textContent = new Date().getFullYear();
+            document.getElementById('copyrightName').textContent = getSettings().websiteName;
+
+            const memberNameInput = document.getElementById('memberNameInput');
+            const memberGenderSelect = document.getElementById('memberGenderSelect');
+            const memberWeaponInput = document.getElementById('memberWeaponInput');
+            const memberStatusToggle = document.getElementById('memberStatusToggle');
+            const addMemberBtn = document.getElementById('addMemberBtn');
+            const memberMessageBox = document.getElementById('memberMessageBox');
+            const houseMembersList = document.getElementById('houseMembersList');
+
+            const editMemberModal = document.getElementById('editMemberModal');
+            const editedMemberNameInput = document.getElementById('editedMemberNameInput');
+            const editedMemberGenderSelect = document.getElementById('editedMemberGenderSelect');
+            const editedMemberWeaponInput = document.getElementById('editedMemberWeaponInput');
+            const editedMemberStatusToggle = document.getElementById('editedMemberStatusToggle');
+            const saveEditedMemberBtn = document.getElementById('saveEditedMemberBtn');
+            const closeEditMemberModalBtn = document.getElementById('closeEditMemberModalBtn');
+            let currentEditingMemberIndex = -1;
+
+            function renderHouseMembers() {
+                // แก้ไขการสะกดชื่อฟังก์ชันจาก getHouselist เป็น getHouseList
+                const members = getHouseList();
+                if (members.length === 0) {
+                    houseMembersList.innerHTML = '<p class="text-center text-gray-500">ยังไม่มีสมาชิก</p>';
+                    return;
+                }
+                members.forEach((member, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'bg-gray-800 p-3 rounded-lg mb-2 text-sm flex justify-between items-center';
+                    const statusClass = member.isOnline ? 'online-status' : 'offline-status';
+                    const statusText = member.isOnline ? 'ออนไลน์' : 'ออฟไลน์';
+                    
+                    item.innerHTML = `
+                        <div>
+                            <p><strong>ชื่อ:</strong> ${member.name}</p>
+                            <p><strong>เพศ:</strong> ${member.gender}</p>
+                            <p><strong>อาวุธ:</strong> ${member.weapon}</p>
+                            <p><strong>สถานะ:</strong> <span class="${statusClass}">${statusText}</span></p>
+                        </div>
+                        <div>
+                            <label class="toggle-switch mr-2">
+                                <input type="checkbox" data-index="${index}" class="status-toggle" ${member.isOnline ? 'checked' : ''}>
+                                <span class="slider"></span>
+                            </label>
+                            <button data-index="${index}" class="edit-member-btn bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded-md text-sm mr-2">แก้ไข</button>
+                            <button data-index="${index}" class="delete-member-btn bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm">ลบ</button>
+                        </div>
+                    `;
+                    houseMembersList.appendChild(item);
+                });
+            }
+
+            addMemberBtn.addEventListener('click', () => {
+                const name = memberNameInput.value.trim();
+                const gender = memberGenderSelect.value;
+                const weapon = memberWeaponInput.value.trim();
+                const isOnline = memberStatusToggle.checked;
+
+                if (!name || !gender || !weapon) {
+                    showMessage(memberMessageBox, 'กรุณากรอกข้อมูลให้ครบถ้วน (ชื่อ, เพศ, อาวุธ)', true);
+                    return;
+                }
+
+                const members = getHouseList();
+                members.push({ name, gender, weapon, isOnline });
+                saveHouseList(members);
+                renderHouseMembers();
+                showMessage(memberMessageBox, 'เพิ่มสมาชิกสำเร็จ!', false);
+
+                memberNameInput.value = '';
+                memberGenderSelect.value = '';
+                memberWeaponInput.value = '';
+                memberStatusToggle.checked = false;
+            });
+
+            houseMembersList.addEventListener('click', (e) => {
+                const index = parseInt(e.target.dataset.index);
+                if (isNaN(index)) return;
+
+                let members = getHouseList();
+
+                if (e.target.classList.contains('delete-member-btn')) {
+                    if (confirm('คุณแน่ใจหรือไม่ว่าต้องการลบสมาชิกนี้?')) {
+                        members.splice(index, 1);
+                        saveHouseList(members);
+                        renderHouseMembers();
+                        showMessage(memberMessageBox, 'ลบสมาชิกสำเร็จ!', false);
+                    }
+                } else if (e.target.classList.contains('edit-member-btn')) {
+                    currentEditingMemberIndex = index;
+                    const memberToEdit = members[index];
+                    editedMemberNameInput.value = memberToEdit.name;
+                    editedMemberGenderSelect.value = memberToEdit.gender;
+                    editedMemberWeaponInput.value = memberToEdit.weapon;
+                    editedMemberStatusToggle.checked = memberToEdit.isOnline;
+                    editMemberModal.classList.remove('hidden');
+                } else if (e.target.classList.contains('status-toggle')) {
+                    members[index].isOnline = e.target.checked;
+                    saveHouseList(members);
+                    renderHouseMembers();
+                }
+            });
+
+            closeEditMemberModalBtn.addEventListener('click', () => {
+                editMemberModal.classList.add('hidden');
+            });
+
+            saveEditedMemberBtn.addEventListener('click', () => {
+                if (currentEditingMemberIndex === -1) return;
+
+                const name = editedMemberNameInput.value.trim();
+                const gender = editedMemberGenderSelect.value;
+                const weapon = editedMemberWeaponInput.value.trim();
+                const isOnline = editedMemberStatusToggle.checked;
+
+                if (!name || !gender || !weapon) {
+                    showMessage(memberMessageBox, 'กรุณากรอกข้อมูลให้ครบถ้วน (ชื่อ, เพศ, อาวุธ)', true);
+                    return;
+                }
+
+                let members = getHouseList();
+                members[currentEditingMemberIndex] = { name, gender, weapon, isOnline };
+                saveHouseList(members);
+                renderHouseMembers();
+                showMessage(memberMessageBox, 'บันทึกการแก้ไขสมาชิกสำเร็จ!', false);
+                editMemberModal.classList.add('hidden');
+            });
+
+            document.getElementById('backToStaffMenuBtn').addEventListener('click', () => {
+                window.location.href = 'staff.html';
+            });
+
+            renderHouseMembers();
+        });
+    </script>
+</body>
+</html>

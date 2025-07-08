@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="websiteTitle">รายงาน</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-gray-900">
+    <div class="form-container" style="max-width: 500px;">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="form-title">📢 รายงาน</h2>
+            <button id="backToMenuBtn" class="button-secondary text-sm">กลับสู่เมนู</button>
+        </div>
+        
+        <form id="reportForm">
+            <div class="mb-4">
+                <label for="reporterName" class="form-label">ชื่อผู้รายงาน:</label>
+                <input type="text" id="reporterName" placeholder="ชื่อของคุณ" class="input-field">
+            </div>
+            <div class="mb-4">
+                <label for="reportSubject" class="form-label">เรื่องแจ้ง:</label>
+                <input type="text" id="reportSubject" placeholder="หัวข้อเรื่องที่ต้องการแจ้ง" class="input-field">
+            </div>
+            <div class="mb-4">
+                <label for="reportDetails" class="form-label">รายละเอียด:</label>
+                <textarea id="reportDetails" rows="5" placeholder="อธิบายรายละเอียดของปัญหา..." class="textarea-field"></textarea>
+            </div>
+            <button type="button" id="submitReportBtn" class="button-primary w-full">ส่งรายงาน</button>
+            <div id="messageBox" class="message-box mt-4"></div>
+        </form>
+    </div>
+    
+    <footer class="mt-8 py-4 px-6 text-center text-gray-300">
+        <p>© <span id="copyrightYear"></span> <span id="copyrightName"></span></p>
+    </footer>
+
+    <script src="js/shared.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = JSON.parse(sessionStorage.getItem('loggedInUser'));
+            if (!user || !user.group || !checkPagePermission(user.group, 'report_form.html')) {
+                window.location.href = 'login.html';
+                return;
+            }
+            applyThemeSettings();
+            let settings = getSettings();
+            
+            document.getElementById('reporterName').value = user.username;
+            document.getElementById('backToMenuBtn').addEventListener('click', () => { window.location.href = 'user.html'; });
+
+            document.getElementById('submitReportBtn').addEventListener('click', async () => {
+                const reportData = {
+                    reporterName: document.getElementById('reporterName').value.trim(),
+                    subject: document.getElementById('reportSubject').value.trim(),
+                    details: document.getElementById('reportDetails').value.trim(),
+                    timestamp: new Date().getTime()
+                };
+                const messageBox = document.getElementById('messageBox');
+
+                if (!reportData.reporterName || !reportData.subject || !reportData.details) {
+                    return showMessage(messageBox, 'กรุณากรอกข้อมูลให้ครบทุกช่อง', true);
+                }
+                
+                let history = getReportHistory();
+                history.push(reportData);
+                saveReportHistory(history);
+
+                const webhookUrl = settings.reportWebhookUrl;
+                if (!webhookUrl) { return showMessage(messageBox, 'ผู้ดูแลยังไม่ได้ตั้งค่า Report Webhook', true); }
+
+                showMessage(messageBox, 'กำลังส่งรายงาน...', false);
+                
+                const payload = {
+                    username: settings.websiteName || "ระบบรายงาน",
+                    embeds: [{
+                        title: `📢 รายงานใหม่: ${reportData.subject}`,
+                        color: 15158332,
+                        fields: [
+                            { name: "ผู้รายงาน", value: reportData.reporterName, inline: false },
+                            { name: "รายละเอียด", value: reportData.details, inline: false }
+                        ],
+                        footer: { text: `ทำรายการโดย: ${user.username}` },
+                        timestamp: new Date().toISOString()
+                    }]
+                };
+
+                await sendDiscordWebhook(webhookUrl, payload);
+                showMessage(messageBox, 'ส่งรายงานสำเร็จ!', false);
+                document.getElementById('reportForm').reset();
+                document.getElementById('reporterName').value = user.username;
+            });
+        });
+    </script>
+</body>
+</html>

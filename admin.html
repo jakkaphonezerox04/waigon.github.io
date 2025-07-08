@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="websiteTitle">แผงควบคุมแอดมิน</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <style>
+        .sortable-ghost { opacity: 0.4; background-color: #4a5568; }
+        #adminLeaveTypesList li, #adminGroupsList li { cursor: grab; }
+        #adminLeaveTypesList li:active, #adminGroupsList li:active { cursor: grabbing; }
+    </style>
+</head>
+<body class="bg-gray-900">
+    <div class="form-container admin-container">
+        <div id="adminDashboard">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="form-title">แผงควบคุมแอดมิน</h2>
+                <button id="adminLogoutBtn" class="button-secondary px-4 py-2 text-sm">ออกจากระบบ</button>
+            </div>
+            
+            <div class="status-box"><h3 class="text-xl font-bold text-white">จำนวนคนลาในวันนี้</h3><span id="onLeaveTodayCount" class="status-count">0</span></div>
+            
+            <div class="admin-section">
+                <h3 class="text-2xl font-bold text-center mb-4 text-white">ตั้งค่าหน้าเว็บ</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                    <div><label for="websiteNameInput" class="form-label">ชื่อเว็บ:</label><input type="text" id="websiteNameInput" class="input-field"></div>
+                    <div><label for="backgroundImageUrlInput" class="form-label">URL รูปพื้นหลัง:</label><input type="text" id="backgroundImageUrlInput" class="input-field"></div>
+                    <div><label for="logoImageUrlInput" class="form-label">URL รูปโลโก้:</label><input type="text" id="logoImageUrlInput" class="input-field"></div>
+                    <div><label for="textColorInput" class="form-label">สีข้อความ:</label><input type="color" id="textColorInput" class="input-field h-12 w-full"></div>
+                    <div><label for="backgroundColorInput" class="form-label">สีพื้นหลัง:</label><input type="color" id="backgroundColorInput" class="input-field h-12 w-full"></div>
+                    <div><label for="themeAccentColorInput" class="form-label">สีธีมหลัก:</label><input type="color" id="themeAccentColorInput" class="input-field h-12 w-full"></div>
+                </div>
+                <button id="saveWebsiteSettingsBtn" class="button-primary w-full mt-4">บันทึกการตั้งค่าเว็บ</button>
+                <div id="websiteSettingsMessageBox" class="message-box"></div>
+            </div>
+            
+            <div class="admin-section">
+                <h3 class="text-2xl font-bold text-center mb-4 text-white">จัดการประเภทการลา (ลากเพื่อสลับลำดับ)</h3>
+                <div class="flex gap-2"><input type="text" id="newLeaveTypeInput" placeholder="เพิ่มประเภทการลาใหม่" class="input-field flex-grow mb-0"><button id="addLeaveTypeBtn" class="button-primary px-6">เพิ่ม</button></div>
+                <div id="leaveTypeMessageBox" class="message-box"></div>
+                <ul id="adminLeaveTypesList" class="max-h-60 overflow-y-auto mt-4 p-2 bg-gray-900 rounded-lg border"></ul>
+            </div>
+
+            <div class="admin-section">
+                <h3 class="text-2xl font-bold text-center mb-4 text-white">จัดการรายการปรับ (Fine List)</h3>
+                <div class="flex gap-2">
+                    <input type="text" id="newFineNameInput" placeholder="เพิ่มรายการปรับ (เช่น วิ่งแก้บน)" class="input-field flex-grow mb-0">
+                    <input type="number" id="newFineAmountInput" placeholder="จำนวนเงิน" class="input-field w-32 mb-0">
+                    <button id="addFineBtn" class="button-primary px-6">เพิ่ม</button>
+                </div>
+                <div id="fineMessageBox" class="message-box"></div>
+                <ul id="adminFineList" class="max-h-60 overflow-y-auto mt-4 p-2 bg-gray-900 rounded-lg border"></ul>
+            </div>
+
+            <div class="admin-section">
+                <h3 class="text-2xl font-bold text-center mb-4 text-white">จัดการกลุ่ม (Groups) และสิทธิ์การเข้าถึง</h3>
+                <div class="flex gap-2"><input type="text" id="newGroupInput" placeholder="เพิ่มกลุ่มใหม่" class="input-field flex-grow mb-0"><button id="addGroupBtn" class="button-primary px-6">เพิ่ม</button></div>
+                <div id="groupMessageBox" class="message-box"></div>
+                <ul id="adminGroupsList" class="max-h-60 overflow-y-auto mt-4 p-2 bg-gray-900 rounded-lg border"></ul>
+            </div>
+
+            <div class="admin-section">
+                <h3 class="text-2xl font-bold text-center mb-4 text-white">จัดการผู้ใช้งาน</h3>
+                <div class="p-4 border border-gray-600 rounded-lg">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <input type="text" id="addUserInput" placeholder="Username" class="input-field mb-0">
+                        <input type="password" id="addUserPasswordInput" placeholder="Password" class="input-field mb-0">
+                        <select id="addUserGroupSelect" class="select-field mb-0"></select>
+                    </div>
+                    <button id="addUserBtn" class="button-primary w-full mt-4">เพิ่มผู้ใช้งาน</button>
+                </div>
+                <div id="userMessageBox" class="message-box"></div>
+                <ul id="adminUsersList" class="max-h-60 overflow-y-auto mt-4 p-2 bg-gray-900 rounded-lg border"></ul>
+            </div>
+
+            <div class="admin-section">
+                <h3 class="text-2xl font-bold text-center mb-4 text-white">ตั้งค่า Webhook</h3>
+                <div><label for="webhookUrlInput" class="form-label">Leave Request Webhook URL:</label><input type="text" id="webhookUrlInput" class="input-field"></div>
+                <div><label for="registrationWebhookUrlInput" class="form-label">Registration Webhook URL:</label><input type="text" id="registrationWebhookUrlInput" class="input-field"></div>
+                <div><label for="deliveryWebhookUrlInput" class="form-label">Delivery Webhook URL:</label><input type="text" id="deliveryWebhookUrlInput" class="input-field"></div>
+                <div><label for="reportWebhookUrlInput" class="form-label">Report Webhook URL:</label><input type="text" id="reportWebhookUrlInput" class="input-field"></div>
+                <button id="updateWebhookBtn" class="button-primary w-full mt-2">บันทึก Webhooks</button>
+                <div id="webhookMessageBox" class="message-box"></div>
+            </div>
+
+            <div class="admin-section">
+                <h3 class="text-2xl font-bold text-center mb-4 text-white">รายการคำขอลา</h3>
+                <div id="leaveRequestsList" class="max-h-96 overflow-y-auto p-4 rounded-lg bg-gray-900 border"></div>
+            </div>
+            
+            <div class="admin-section">
+                <h3 class="text-2xl font-bold text-center mb-4 text-white">ประวัติการส่งของ</h3>
+                <div id="deliveryHistoryList" class="max-h-96 overflow-y-auto p-4 rounded-lg bg-gray-900 border"></div>
+            </div>
+            <div class="admin-section">
+                <h3 class="text-2xl font-bold text-center mb-4 text-white">ประวัติการรายงาน</h3>
+                <div id="reportHistoryList" class="max-h-96 overflow-y-auto p-4 rounded-lg bg-gray-900 border"></div>
+            </div>
+            
+            <div class="admin-section">
+                <h3 class="text-2xl font-bold text-center mb-4 text-white">สร้างไฟล์ HTML สำหรับ Deploy</h3>
+                <p class="text-center text-sm text-gray-400 mb-4">เมื่อตั้งค่าทุกอย่างเรียบร้อยแล้ว กดปุ่มนี้เพื่อดาวน์โหลดไฟล์ `index.html`</p>
+                <button id="generateHtmlFileBtn" class="button-primary w-full">สร้างและดาวน์โหลด index.html</button>
+                <div id="generateHtmlMessageBox" class="message-box"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="editLeaveTypeModal" class="modal-overlay hidden"><div class="modal-content"><h3 class="text-xl font-bold mb-4">แก้ไขประเภทการลา</h3><input type="text" id="editedLeaveTypeInput" class="input-field mb-4"><div class="flex justify-center gap-4"><button id="saveEditedLeaveTypeBtn" class="button-primary px-6 py-2">บันทึก</button><button id="closeEditModalBtn" class="button-secondary px-6 py-2">ยกเลิก</button></div></div></div>
+    
+    <div id="editFineModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 class="text-xl font-bold mb-4">แก้ไขรายการปรับ</h3>
+            <div class="mb-4 text-left">
+                <label for="editedFineNameInput" class="form-label">ชื่อรายการปรับ:</label>
+                <input type="text" id="editedFineNameInput" class="input-field">
+            </div>
+            <div class="mb-4 text-left">
+                <label for="editedFineAmountInput" class="form-label">จำนวนเงิน:</label>
+                <input type="number" id="editedFineAmountInput" class="input-field">
+            </div>
+            <div class="flex justify-center gap-4 mt-6">
+                <button id="saveEditedFineBtn" class="button-primary px-6 py-2">บันทึก</button>
+                <button id="closeEditFineModalBtn" class="button-secondary px-6 py-2">ยกเลิก</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="editGroupModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 class="text-xl font-bold mb-4">แก้ไขกลุ่มและสิทธิ์</h3>
+            <div class="mb-4 text-left">
+                <label for="editedGroupInput" class="form-label">ชื่อกลุ่ม:</label>
+                <input type="text" id="editedGroupInput" class="input-field" disabled>
+            </div>
+            <div class="mb-4 text-left">
+                <label class="form-label">สิทธิ์การเข้าถึงหน้า:</label>
+                <div id="groupPermissionsCheckboxes" class="grid grid-cols-2 gap-2 text-sm">
+                </div>
+            </div>
+            <div class="flex justify-center gap-4 mt-6">
+                <button id="saveEditedGroupBtn" class="button-primary px-6 py-2">บันทึก</button>
+                <button id="closeEditGroupModalBtn" class="button-secondary px-6 py-2">ยกเลิก</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="editUserModal" class="modal-overlay hidden"><div class="modal-content"><h3 class="text-xl font-bold mb-4">แก้ไขผู้ใช้งาน</h3><div class="mb-4 text-left"><label for="editedUsernameInput" class="form-label">ชื่อผู้ใช้:</label><input type="text" id="editedUsernameInput" class="input-field" disabled></div><div class="mb-4 text-left"><label for="editedUserPasswordInput" class="form-label">รหัสผ่านใหม่:</label><input type="password" id="editedUserPasswordInput" class="input-field"></div><div class="mb-4 text-left"><label for="editedUserGroupSelect" class="form-label">กลุ่ม:</label><select id="editedUserGroupSelect" class="select-field"></select></div><div class="flex justify-center gap-4"><button id="saveEditedUserBtn" class="button-primary px-6 py-2">บันทึก</button><button id="closeEditUserModalBtn" class="button-secondary px-6 py-2">ยกเลิก</button></div></div></div>
+    <div id="deleteUserConfirmModal" class="modal-overlay hidden"><div class="modal-content"><h3 class="text-xl font-bold mb-4 text-red-400">ยืนยันการลบผู้ใช้</h3><p id="deleteUserConfirmText" class="mb-6 text-lg"></p><div class="flex justify-center gap-4"><button id="confirmDeleteUserBtn" class="button-primary bg-red-600 px-6 py-2">ยืนยัน</button><button id="cancelDeleteUserBtn" class="button-secondary px-6 py-2">ยกเลิก</button></div></div></div>
+    
+    <footer class="mt-8 py-4 px-6 text-center text-gray-300">
+        <p>© <span id="copyrightYear"></span> <span id="copyrightName"></span></p>
+    </footer>
+
+    <script src="js/shared.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = JSON.parse(sessionStorage.getItem('loggedInUser'));
+            if (!user || user.group !== 'admin' || !checkPagePermission(user.group, 'admin.html')) {
+                window.location.href = 'login.html';
+                return;
+            }
+            applyThemeSettings();
+            let settings = getSettings();
+
+            let leaveRequests = getLeaveRequests();
+            let deliveryHistory = getDeliveryHistory();
+            let reportHistory = getReportHistory();
+            
+            const adminLogoutBtn = document.getElementById('adminLogoutBtn');
+            const onLeaveTodayCount = document.getElementById('onLeaveTodayCount');
+            const leaveRequestsList = document.getElementById('leaveRequestsList');
+            const saveWebsiteSettingsBtn = document.getElementById('saveWebsiteSettingsBtn');
+            const addLeaveTypeBtn = document.getElementById('addLeaveTypeBtn');
+            const adminLeaveTypesList = document.getElementById('adminLeaveTypesList');
+            const newLeaveTypeInput = document.getElementById('newLeaveTypeInput');
+            const addUserBtn = document.getElementById('addUserBtn');
+            const adminUsersList = document.getElementById('adminUsersList');
+            const addUserGroupSelect = document.getElementById('addUserGroupSelect');
+            const updateWebhookBtn = document.getElementById('updateWebhookBtn');
+            const generateHtmlFileBtn = document.getElementById('generateHtmlFileBtn');
+            const deliveryHistoryList = document.getElementById('deliveryHistoryList');
+            const reportHistoryList = document.getElementById('reportHistoryList');
+            
+            const editLeaveTypeModal = document.getElementById('editLeaveTypeModal');
+            const closeEditModalBtn = document.getElementById('closeEditModalBtn');
+            const saveEditedLeaveTypeBtn = document.getElementById('saveEditedLeaveTypeBtn');
+            const editedLeaveTypeInput = document.getElementById('editedLeaveTypeInput');
+            let currentEditingLeaveTypeIndex = -1;
+            
+            const editUserModal = document.getElementById('editUserModal');
+            const closeEditUserModalBtn = document.getElementById('closeEditUserModalBtn');
+            const saveEditedUserBtn = document.getElementById('saveEditedUserBtn');
+            const editedUsernameInput = document.getElementById('editedUsernameInput');
+            const editedUserPasswordInput = document.getElementById('editedUserPasswordInput');
+            const editedUserGroupSelect = document.getElementById('editedUserGroupSelect');
+            let currentEditingUsername = null;
+
+            const deleteUserConfirmModal = document.getElementById('deleteUserConfirmModal');
+            const confirmDeleteUserBtn = document.getElementById('confirmDeleteUserBtn');
+            const cancelDeleteUserBtn = document.getElementById('cancelDeleteUserBtn');
+            const deleteUserConfirmText = document.getElementById('deleteUserConfirmText');
+            let userToDelete = null;
+
+            const websiteSettingsMessageBox = document.getElementById('websiteSettingsMessageBox');
+            const leaveTypeMessageBox = document.getElementById('leaveTypeMessageBox');
+            const userMessageBox = document.getElementById('userMessageBox');
+            const webhookMessageBox = document.getElementById('webhookMessageBox');
+            const generateHtmlMessageBox = document.getElementById('generateHtmlMessageBox');
+
+            const newFineNameInput = document.getElementById('newFineNameInput');
+            const newFineAmountInput = document.getElementById('newFineAmountInput');
+            const addFineBtn = document.getElementById('addFineBtn');
+            const adminFineList = document.getElementById('adminFineList');
+            const fineMessageBox = document.getElementById('fineMessageBox');
+            const editFineModal = document.getElementById('editFineModal');
+            const editedFineNameInput = document.getElementById('editedFineNameInput');
+            const editedFineAmountInput = document.getElementById('editedFineAmountInput');
+            const saveEditedFineBtn = document.getElementById('saveEditedFineBtn');
+            const closeEditFineModalBtn = document.getElementById('closeEditFineModalBtn');
+            let currentEditingFineIndex = -1;
+
+            const newGroupInput = document.getElementById('newGroupInput');
+            const addGroupBtn = document.getElementById('addGroupBtn');
+            const adminGroupsList = document.getElementById('adminGroupsList');
+            const groupMessageBox = document.getElementById('groupMessageBox');
+            const editGroupModal = document.getElementById('editGroupModal');
+            const editedGroupInput = document.getElementById('editedGroupInput');
+            const groupPermissionsCheckboxes = document.getElementById('groupPermissionsCheckboxes');
+            const saveEditedGroupBtn = document.getElementById('saveEditedGroupBtn');
+            const closeEditGroupModalBtn = document.getElementById('closeEditGroupModalBtn');
+            let currentEditingGroup = null;
+
+            const ALL_PAGES = [
+                "user.html",
+                "admin.html",
+                "staff.html",
+                "leave_form.html",
+                "delivery_form.html",
+                "report_form.html",
+                "house_list.html",
+                "fine_form.html"
+            ];
+
+            document.getElementById('copyrightYear').textContent = new Date().getFullYear();
+            document.getElementById('copyrightName').textContent = settings.websiteName;
+
+            function renderUsers() {
+                adminUsersList.innerHTML = '';
+                Object.entries(settings.users).forEach(([username, userData]) => {
+                    const li = document.createElement('li');
+                    li.className = 'flex justify-between items-center bg-gray-800 p-2 rounded-lg mb-2';
+                    li.dataset.id = username;
+                    li.innerHTML = `<span>${username} (${userData.group})</span><div><button data-username="${username}" class="edit-user-btn bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded-md text-sm mr-2">แก้ไข</button><button data-username="${username}" class="delete-user-btn bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm">ลบ</button></div>`;
+                    adminUsersList.appendChild(li);
+                });
+            }
+
+            function renderLeaveTypes() {
+                adminLeaveTypesList.innerHTML = '';
+                if(settings.leaveTypes && Array.isArray(settings.leaveTypes)) {
+                    settings.leaveTypes.forEach((type, index) => {
+                        const li = document.createElement('li');
+                        li.className = 'flex justify-between items-center bg-gray-800 p-2 rounded-lg mb-2';
+                        li.dataset.id = type;
+                        li.innerHTML = `<span>${type}</span><div><button data-index="${index}" data-type="${type}" class="edit-leave-type-btn bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded-md text-sm mr-2">แก้ไข</button><button data-index="${index}" class="delete-leave-type-btn bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm">ลบ</button></div>`;
+                        adminLeaveTypesList.appendChild(li);
+                    });
+                }
+            }
+            
+            function renderFineList() {
+                adminFineList.innerHTML = '';
+                const fineList = getFineList();
+                if (fineList.length === 0) {
+                    adminFineList.innerHTML = '<p class="text-center text-gray-500">ยังไม่มีรายการปรับ</p>';
+                    return;
+                }
+                fineList.forEach((fine, index) => {
+                    const li = document.createElement('li');
+                    li.className = 'flex justify-between items-center bg-gray-800 p-2 rounded-lg mb-2';
+                    li.dataset.index = index;
+                    li.innerHTML = `
+                        <span>${fine.name} (฿${fine.amount})</span>
+                        <div>
+                            <button data-index="${index}" data-name="${fine.name}" data-amount="${fine.amount}" class="edit-fine-btn bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded-md text-sm mr-2">แก้ไข</button>
+                            <button data-index="${index}" class="delete-fine-btn bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm">ลบ</button>
+                        </div>
+                    `;
+                    adminFineList.appendChild(li);
+                });
+            }
+
+            function renderGroups() {
+                adminGroupsList.innerHTML = '';
+                addUserGroupSelect.innerHTML = '';
+                editedUserGroupSelect.innerHTML = '';
+
+                if(settings.availableGroups && Array.isArray(settings.availableGroups)) {
+                    settings.availableGroups.forEach((groupName, index) => {
+                        const li = document.createElement('li');
+                        li.className = 'flex justify-between items-center bg-gray-800 p-2 rounded-lg mb-2';
+                        li.dataset.id = groupName;
+                        li.innerHTML = `<span>${groupName}</span><div><button data-index="${index}" data-group="${groupName}" class="edit-group-btn bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded-md text-sm mr-2">แก้ไขสิทธิ์</button><button data-index="${index}" data-group="${groupName}" class="delete-group-btn bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm">ลบ</button></div>`;
+                        adminGroupsList.appendChild(li);
+
+                        const option1 = document.createElement('option');
+                        option1.value = groupName;
+                        option1.textContent = groupName;
+                        addUserGroupSelect.appendChild(option1);
+
+                        const option2 = document.createElement('option');
+                        option2.value = groupName;
+                        option2.textContent = groupName;
+                        editedUserGroupSelect.appendChild(option2);
+                    });
+                }
+                if (!addUserGroupSelect.value && settings.availableGroups.includes('member')) {
+                    addUserGroupSelect.value = 'member';
+                }
+            }
+            
+            function renderLeaveRequests() {
+                leaveRequestsList.innerHTML = '';
+                let onLeaveCount = 0;
+                const today = new Date(); today.setHours(0,0,0,0);
+                [...leaveRequests].sort((a,b) => b.timestamp - a.timestamp).forEach(req => {
+                    const item = document.createElement('div');
+                    item.className = 'bg-gray-800 p-3 rounded-lg mb-2 text-sm';
+                    item.innerHTML = `${req.houseName ? `<p><strong>ชื่อบ้าน:</strong> ${req.houseName}</p>` : ''}<p><strong>ชื่อ:</strong> ${req.name}</p><p><strong>ประเภท:</strong> ${req.leaveTypes.join(', ')}</p><p><strong>วันที่:</strong> ${req.startDate} ถึง ${req.endDate}</p><p><strong>เหตุผล:</strong> ${req.reason}</p><p class="text-xs text-gray-500 mt-1">${new Date(req.timestamp).toLocaleString()}</p>`;
+                    leaveRequestsList.appendChild(item);
+                    const startDate = new Date(req.startDate); startDate.setHours(0,0,0,0);
+                    const endDate = new Date(req.endDate); endDate.setHours(0,0,0,0);
+                    if(today >= startDate && today <= endDate) onLeaveCount++;
+                });
+                onLeaveTodayCount.textContent = onLeaveCount;
+            }
+
+            function renderDeliveryHistory() {
+                deliveryHistoryList.innerHTML = '';
+                if (deliveryHistory.length === 0) { deliveryHistoryList.innerHTML = '<p class="text-center text-gray-500">ไม่มีประวัติ</p>'; return; }
+                [...deliveryHistory].sort((a,b)=>b.timestamp-a.timestamp).forEach(item => {
+                    const el = document.createElement('div');
+                    el.className = 'bg-gray-800 p-3 rounded-lg mb-2 text-sm';
+                    const fullName = item.houseName ? `[${item.houseName}] ${item.senderName}` : item.senderName;
+                    el.innerHTML = `<p><strong>ผู้ส่ง:</strong> ${fullName}</p><p><strong>ประเภท:</strong> ${item.deliveryType}</p><p><strong>วันที่ส่ง:</strong> ${item.deliveryDate}</p><p><strong>มีรูปแนบ:</strong> ${item.screenshot ? 'ใช่' : 'ไม่'}</p><p class="text-xs text-gray-500 mt-1">${new Date(item.timestamp).toLocaleString()}</p>`;
+                    deliveryHistoryList.appendChild(el);
+                });
+            }
+
+            function renderReportHistory() {
+                reportHistoryList.innerHTML = '';
+                if (reportHistory.length === 0) { reportHistoryList.innerHTML = '<p class="text-center text-gray-500">ไม่มีประวัติ</p>'; return; }
+                [...reportHistory].sort((a,b)=>b.timestamp-a.timestamp).forEach(item => {
+                    const el = document.createElement('div');
+                    el.className = 'bg-gray-800 p-3 rounded-lg mb-2 text-sm';
+                    el.innerHTML = `<p><strong>ผู้รายงาน:</strong> ${item.reporterName}</p><p><strong>เรื่อง:</strong> ${item.subject}</p><p><strong>รายละเอียด:</strong> ${item.details}</p><p class="text-xs text-gray-500 mt-1">${new Date(item.timestamp).toLocaleString()}</p>`;
+                    reportHistoryList.appendChild(el);
+                });
+            }
+
+            function populateAdminData() {
+                document.getElementById('websiteNameInput').value = settings.websiteName;
+                document.getElementById('backgroundColorInput').value = settings.backgroundColor;
+                document.getElementById('textColorInput').value = settings.textColor;
+                document.getElementById('themeAccentColorInput').value = settings.themeAccentColor;
+                document.getElementById('backgroundImageUrlInput').value = settings.backgroundImageUrl;
+                document.getElementById('logoImageUrlInput').value = settings.logoImageUrl;
+                document.getElementById('webhookUrlInput').value = settings.webhookUrl || '';
+                document.getElementById('registrationWebhookUrlInput').value = settings.registrationWebhookUrl || '';
+                document.getElementById('deliveryWebhookUrlInput').value = settings.deliveryWebhookUrl || '';
+                document.getElementById('reportWebhookUrlInput').value = settings.reportWebhookUrl || '';
+                renderGroups();
+                renderUsers();
+                renderLeaveTypes();
+                renderFineList();
+                renderLeaveRequests();
+                renderDeliveryHistory();
+                renderReportHistory();
+            }
+
+            Sortable.create(adminLeaveTypesList, {
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                onEnd: function (evt) {
+                    const newOrder = Array.from(adminLeaveTypesList.querySelectorAll('li')).map(li => li.dataset.id);
+                    settings.leaveTypes = newOrder;
+                    saveSettings(settings);
+                    renderLeaveTypes();
+                    showMessage(leaveTypeMessageBox, 'จัดลำดับใหม่แล้ว!', false);
+                },
+            });
+
+            Sortable.create(adminGroupsList, {
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                onEnd: function (evt) {
+                    const newOrder = Array.from(adminGroupsList.querySelectorAll('li')).map(li => li.dataset.id);
+                    settings.availableGroups = newOrder;
+                    saveSettings(settings);
+                    renderGroups();
+                    showMessage(groupMessageBox, 'จัดลำดับใหม่แล้ว!', false);
+                },
+            });
+
+
+            adminLogoutBtn.addEventListener('click', () => { sessionStorage.removeItem('loggedInUser'); window.location.href = 'login.html'; });
+            
+            saveWebsiteSettingsBtn.addEventListener('click', () => {
+                settings.websiteName = document.getElementById('websiteNameInput').value;
+                settings.backgroundColor = document.getElementById('backgroundColorInput').value;
+                settings.textColor = document.getElementById('textColorInput').value;
+                settings.themeAccentColor = document.getElementById('themeAccentColorInput').value;
+                settings.backgroundImageUrl = document.getElementById('backgroundImageUrlInput').value;
+                settings.logoImageUrl = document.getElementById('logoImageUrlInput').value;
+                saveSettings(settings);
+                applyThemeSettings();
+                showMessage(websiteSettingsMessageBox, 'บันทึกสำเร็จ!', false);
+            });
+
+            addLeaveTypeBtn.addEventListener('click', () => {
+                const type = newLeaveTypeInput.value.trim();
+                if (!settings.leaveTypes) settings.leaveTypes = [];
+                if (type && !settings.leaveTypes.includes(type)) {
+                    settings.leaveTypes.push(type);
+                    saveSettings(settings);
+                    renderLeaveTypes();
+                    showMessage(leaveTypeMessageBox, 'เพิ่มประเภทการลาสำเร็จ!', false);
+                } else if (type && settings.leaveTypes.includes(type)) {
+                    showMessage(leaveTypeMessageBox, 'มีประเภทการลานี้อยู่แล้ว', true);
+                } else {
+                    showMessage(leaveTypeMessageBox, 'กรุณากรอกชื่อประเภทการลา', true);
+                }
+                newLeaveTypeInput.value = '';
+            });
+            
+            adminLeaveTypesList.addEventListener('click', e => {
+                if(e.target.classList.contains('delete-leave-type-btn')) {
+                    const index = parseInt(e.target.dataset.index);
+                    settings.leaveTypes.splice(index, 1);
+                    saveSettings(settings);
+                    renderLeaveTypes();
+                    showMessage(leaveTypeMessageBox, 'ลบประเภทการลาสำเร็จ!', false);
+                }
+                 if (e.target.classList.contains('edit-leave-type-btn')) {
+                    currentEditingLeaveTypeIndex = parseInt(e.target.dataset.index);
+                    editedLeaveTypeInput.value = e.target.dataset.type;
+                    editLeaveTypeModal.classList.remove('hidden');
+                }
+            });
+            
+            closeEditModalBtn.addEventListener('click', () => editLeaveTypeModal.classList.add('hidden'));
+            saveEditedLeaveTypeBtn.addEventListener('click', () => {
+                const newName = editedLeaveTypeInput.value.trim();
+                if (newName && currentEditingLeaveTypeIndex > -1) {
+                    if (settings.leaveTypes.includes(newName) && settings.leaveTypes[currentEditingLeaveTypeIndex] !== newName) {
+                        showMessage(leaveTypeMessageBox, 'มีประเภทการลานี้อยู่แล้ว', true);
+                        return;
+                    }
+                    settings.leaveTypes[currentEditingLeaveTypeIndex] = newName;
+                    saveSettings(settings);
+                    renderLeaveTypes();
+                    editLeaveTypeModal.classList.add('hidden');
+                    showMessage(leaveTypeMessageBox, 'แก้ไขประเภทการลาสำเร็จ!', false);
+                } else {
+                    showMessage(leaveTypeMessageBox, 'กรุณากรอกชื่อประเภทการลา', true);
+                }
+            });
+
+            addFineBtn.addEventListener('click', () => {
+                const name = newFineNameInput.value.trim();
+                const amount = parseInt(newFineAmountInput.value);
+
+                if (!name || isNaN(amount) || amount <= 0) {
+                    showMessage(fineMessageBox, 'กรุณากรอกชื่อและจำนวนเงินที่ถูกต้อง', true);
+                    return;
+                }
+                
+                let fineList = getFineList();
+                if (fineList.some(fine => fine.name === name)) {
+                    showMessage(fineMessageBox, 'มีรายการปรับนี้อยู่แล้ว', true);
+                    return;
+                }
+
+                fineList.push({ name, amount });
+                saveFineList(fineList);
+                renderFineList();
+                showMessage(fineMessageBox, 'เพิ่มรายการปรับสำเร็จ!', false);
+                newFineNameInput.value = '';
+                newFineAmountInput.value = '';
+            });
+
+            adminFineList.addEventListener('click', (e) => {
+                const index = parseInt(e.target.dataset.index);
+                if (isNaN(index)) return;
+
+                let fineList = getFineList();
+
+                if (e.target.classList.contains('delete-fine-btn')) {
+                    if (confirm('คุณแน่ใจหรือไม่ว่าต้องการลบรายการปรับนี้?')) {
+                        fineList.splice(index, 1);
+                        saveFineList(fineList);
+                        renderFineList();
+                        showMessage(fineMessageBox, 'ลบรายการปรับสำเร็จ!', false);
+                    }
+                } else if (e.target.classList.contains('edit-fine-btn')) {
+                    currentEditingFineIndex = index;
+                    const fineToEdit = fineList[index];
+                    editedFineNameInput.value = fineToEdit.name;
+                    editedFineAmountInput.value = fineToEdit.amount;
+                    editFineModal.classList.remove('hidden');
+                }
+            });
+
+            closeEditFineModalBtn.addEventListener('click', () => {
+                editFineModal.classList.add('hidden');
+            });
+
+            saveEditedFineBtn.addEventListener('click', () => {
+                if (currentEditingFineIndex === -1) return;
+
+                const name = editedFineNameInput.value.trim();
+                const amount = parseInt(editedFineAmountInput.value);
+
+                if (!name || isNaN(amount) || amount <= 0) {
+                    showMessage(fineMessageBox, 'กรุณากรอกชื่อและจำนวนเงินที่ถูกต้อง', true);
+                    return;
+                }
+                
+                let fineList = getFineList();
+                if (fineList.some((fine, i) => fine.name === name && i !== currentEditingFineIndex)) {
+                    showMessage(fineMessageBox, 'มีรายการปรับนี้อยู่แล้ว', true);
+                    return;
+                }
+
+                fineList[currentEditingFineIndex] = { name, amount };
+                saveFineList(fineList);
+                renderFineList();
+                showMessage(fineMessageBox, 'บันทึกการแก้ไขรายการปรับสำเร็จ!', false);
+                editFineModal.classList.add('hidden');
+            });
+
+            addGroupBtn.addEventListener('click', () => {
+                const groupName = newGroupInput.value.trim();
+                if (!settings.availableGroups) settings.availableGroups = [];
+                if (groupName && !settings.availableGroups.includes(groupName)) {
+                    settings.availableGroups.push(groupName);
+                    settings.groupPermissions[groupName] = [];
+                    saveSettings(settings);
+                    renderGroups();
+                    showMessage(groupMessageBox, 'เพิ่มกลุ่มสำเร็จ!', false);
+                } else if (groupName && settings.availableGroups.includes(groupName)) {
+                    showMessage(groupMessageBox, 'มีกลุ่มนี้อยู่แล้ว', true);
+                } else {
+                    showMessage(groupMessageBox, 'กรุณากรอกชื่อกลุ่ม', true);
+                }
+                newGroupInput.value = '';
+            });
+
+            adminGroupsList.addEventListener('click', e => {
+                if (e.target.classList.contains('delete-group-btn')) {
+                    const groupToDelete = e.target.dataset.group;
+                    if (groupToDelete === 'admin' || groupToDelete === 'member' || groupToDelete === 'staff') {
+                        showMessage(groupMessageBox, 'ไม่สามารถลบกลุ่มเริ่มต้น (member, staff, admin) ได้', true);
+                        return;
+                    }
+                    const usersWithGroup = Object.values(settings.users).filter(u => u.group === groupToDelete);
+                    if (usersWithGroup.length > 0) {
+                        showMessage(groupMessageBox, `ไม่สามารถลบกลุ่มนี้ได้ มีผู้ใช้ ${usersWithGroup.length} คนใช้กลุ่มนี้อยู่`, true);
+                        return;
+                    }
+
+                    const index = settings.availableGroups.indexOf(groupToDelete);
+                    if (index > -1) {
+                        settings.availableGroups.splice(index, 1);
+                        delete settings.groupPermissions[groupToDelete];
+                        saveSettings(settings);
+                        renderGroups();
+                        showMessage(groupMessageBox, 'ลบกลุ่มสำเร็จ!', false);
+                    }
+                }
+                if (e.target.classList.contains('edit-group-btn')) {
+                    currentEditingGroup = e.target.dataset.group;
+                    editedGroupInput.value = currentEditingGroup;
+                    editGroupModal.classList.remove('hidden');
+                    
+                    groupPermissionsCheckboxes.innerHTML = '';
+                    const currentPermissions = settings.groupPermissions[currentEditingGroup] || [];
+
+                    ALL_PAGES.forEach(page => {
+                        const label = document.createElement('label');
+                        label.className = 'checkbox-label';
+                        label.innerHTML = `<input type="checkbox" data-page="${page}" ${currentPermissions.includes(page) ? 'checked' : ''}> ${page.replace('.html', '').replace('_', ' ')}`;
+                        groupPermissionsCheckboxes.appendChild(label);
+                    });
+                }
+            });
+
+            closeEditGroupModalBtn.addEventListener('click', () => editGroupModal.classList.add('hidden'));
+            saveEditedGroupBtn.addEventListener('click', () => {
+                const groupName = editedGroupInput.value.trim();
+                if (!groupName) {
+                    showMessage(groupMessageBox, 'ชื่อกลุ่มไม่ถูกต้อง', true);
+                    return;
+                }
+                if (groupName === 'admin' || groupName === 'member' || groupName === 'staff') {
+                     showMessage(groupMessageBox, 'ไม่สามารถเปลี่ยนชื่อกลุ่มเริ่มต้น (member, staff, admin) ได้', false);
+                }
+
+                const selectedPermissions = Array.from(groupPermissionsCheckboxes.querySelectorAll('input[type="checkbox"]:checked'))
+                                              .map(cb => cb.dataset.page);
+                
+                settings.groupPermissions[currentEditingGroup] = selectedPermissions; 
+                saveSettings(settings);
+                renderGroups();
+                showMessage(groupMessageBox, 'บันทึกสิทธิ์กลุ่มสำเร็จ!', false);
+                editGroupModal.classList.add('hidden');
+            });
+
+
+            addUserBtn.addEventListener('click', () => {
+                const username = document.getElementById('addUserInput').value.trim();
+                const password = document.getElementById('addUserPasswordInput').value;
+                const group = addUserGroupSelect.value;
+                if(!username || !password) return showMessage(userMessageBox, 'กรุณากรอกข้อมูล', true);
+                if(settings.users[username]) return showMessage(userMessageBox, 'ชื่อผู้ใช้นี้มีอยู่แล้ว', true);
+                settings.users[username] = { password, group };
+                saveSettings(settings);
+                renderUsers();
+                document.getElementById('addUserInput').value = '';
+                document.getElementById('addUserPasswordInput').value = '';
+                showMessage(userMessageBox, 'เพิ่มผู้ใช้สำเร็จ!', false);
+            });
+            
+            adminUsersList.addEventListener('click', (e) => {
+                const targetUsername = e.target.dataset.username;
+                if (!targetUsername) return;
+                if (e.target.classList.contains('edit-user-btn')) {
+                    currentEditingUsername = targetUsername;
+                    const userData = settings.users[targetUsername];
+                    editedUsernameInput.value = targetUsername;
+                    editedUserPasswordInput.value = userData.password;
+                    editedUserGroupSelect.value = userData.group;
+                    editUserModal.classList.remove('hidden');
+                }
+                if (e.target.classList.contains('delete-user-btn')) {
+                    if (targetUsername === user.username) {
+                        return showMessage(userMessageBox, 'ไม่สามารถลบผู้ใช้ที่คุณกำลังเข้าสู่ระบบอยู่ได้', true);
+                    }
+                    userToDelete = targetUsername;
+                    deleteUserConfirmText.textContent = `ยืนยันการลบผู้ใช้ "${userToDelete}"?`;
+                    deleteUserConfirmModal.classList.remove('hidden');
+                }
+            });
+            
+            closeEditUserModalBtn.addEventListener('click', () => editUserModal.classList.add('hidden'));
+            saveEditedUserBtn.addEventListener('click', () => {
+                const newPassword = editedUserPasswordInput.value.trim();
+                const newGroup = editedUserGroupSelect.value;
+                if (!newPassword) return showMessage(userMessageBox, 'กรุณากรอกรหัสผ่านใหม่', true);
+                if (currentEditingUsername) {
+                    settings.users[currentEditingUsername].password = newPassword;
+                    settings.users[currentEditingUsername].group = newGroup;
+                    saveSettings(settings);
+                    renderUsers();
+                    editUserModal.classList.add('hidden');
+                    showMessage(userMessageBox, `แก้ไขผู้ใช้ "${currentEditingUsername}" สำเร็จ!`, false);
+                }
+            });
+            
+            cancelDeleteUserBtn.addEventListener('click', () => deleteUserConfirmModal.classList.add('hidden'));
+            confirmDeleteUserBtn.addEventListener('click', () => {
+                if (userToDelete) {
+                    delete settings.users[userToDelete];
+                    saveSettings(settings);
+                    renderUsers();
+                    deleteUserConfirmModal.classList.add('hidden');
+                    showMessage(userMessageBox, `ลบผู้ใช้ "${userToDelete}" สำเร็จ!`, false);
+                }
+            });
+
+            updateWebhookBtn.addEventListener('click', () => {
+                settings.webhookUrl = document.getElementById('webhookUrlInput').value.trim();
+                settings.registrationWebhookUrl = document.getElementById('registrationWebhookUrlInput').value.trim();
+                settings.deliveryWebhookUrl = document.getElementById('deliveryWebhookUrlInput').value.trim();
+                settings.reportWebhookUrl = document.getElementById('reportWebhookUrlInput').value.trim();
+                saveSettings(settings);
+                showMessage(webhookMessageBox, 'บันทึก Webhook สำเร็จ!', false);
+            });
+
+            generateHtmlFileBtn.addEventListener('click', () => {
+                showMessage(generateHtmlMessageBox, 'ฟังก์ชันนี้กำลังปรับปรุง', true);
+            });
+            
+            populateAdminData();
+        });
+    </script>
+</body>
+</html>

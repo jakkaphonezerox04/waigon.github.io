@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="websiteTitle">แจ้งลา</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-gray-900">
+    <div class="form-container">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="form-title">📝 แจ้งลา</h2>
+            <button id="backToMenuBtn" class="button-secondary text-sm">กลับสู่เมนู</button>
+        </div>
+        
+        <form id="leaveRequestForm">
+            <div class="mb-4"><label for="name" class="form-label"><span class="icon user-icon"></span>ชื่อ:</label><input type="text" id="name" placeholder="กรอกชื่อของคุณ" class="input-field"></div>
+            <div class="mb-4"><label for="houseName" class="form-label"><span class="icon user-icon"></span>ชื่อบ้าน:</label><input type="text" id="houseName" placeholder="กรอกชื่อบ้าน (ถ้ามี)" class="input-field"></div>
+            <div class="mb-4"><label class="form-label">ประเภทการลา:</label><div id="leaveTypeCheckboxes" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div></div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div><label for="startDate" class="form-label"><span class="icon calendar-icon"></span>วันที่เริ่มลา:</label><input type="date" id="startDate" class="input-field"></div>
+                <div><label for="endDate" class="form-label"><span class="icon calendar-icon"></span>วันที่สิ้นสุด:</label><input type="date" id="endDate" class="input-field"></div>
+            </div>
+            <div class="mb-4"><label for="reason" class="form-label"><span class="icon file-icon"></span>เหตุผล:</label><textarea id="reason" rows="3" placeholder="ระบุเหตุผล..." class="textarea-field"></textarea></div>
+            <button type="button" id="submitLeaveBtn" class="button-primary w-full">ส่งคำขอลา</button>
+            <div id="messageBox" class="message-box mt-4"></div>
+        </form>
+    </div>
+    
+    <script src="js/shared.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = JSON.parse(sessionStorage.getItem('loggedInUser'));
+            if (!user || !user.group || !checkPagePermission(user.group, 'leave_form.html')) {
+                window.location.href = 'login.html';
+                return;
+            }
+            applyThemeSettings();
+            let settings = getSettings();
+            
+            document.getElementById('name').value = user.username;
+            const leaveTypeCheckboxesDiv = document.getElementById('leaveTypeCheckboxes');
+            if (settings.leaveTypes) { settings.leaveTypes.forEach(type => { const l = document.createElement('label'); l.className = 'checkbox-label'; l.innerHTML = `<input type="checkbox" name="leaveType" value="${type}"> ${type}`; leaveTypeCheckboxesDiv.appendChild(l); }); }
+
+            document.getElementById('backToMenuBtn').addEventListener('click', () => { window.location.href = 'user.html'; });
+            
+            document.getElementById('submitLeaveBtn').addEventListener('click', async () => {
+                const leaveData = { name: document.getElementById('name').value.trim(), houseName: document.getElementById('houseName').value.trim(), leaveTypes: Array.from(document.querySelectorAll('input[name="leaveType"]:checked')).map(cb => cb.value), startDate: document.getElementById('startDate').value, endDate: document.getElementById('endDate').value, reason: document.getElementById('reason').value.trim(), timestamp: new Date().getTime(), userId: user.username };
+                if (!leaveData.name || leaveData.leaveTypes.length === 0 || !leaveData.startDate || !leaveData.endDate || !leaveData.reason) { return showMessage(document.getElementById('messageBox'), 'กรุณากรอกข้อมูลให้ครบ', true); }
+                
+                let leaveRequests = getLeaveRequests();
+                leaveRequests.push(leaveData);
+                saveLeaveRequests(leaveRequests);
+                
+                const fullName = leaveData.houseName ? `[${leaveData.houseName}] ${leaveData.name}` : leaveData.name;
+                const description = `**ผู้ยื่นคำขอ:** ${fullName}\n**เหตุผลโดยย่อ:** ${leaveData.reason}`;
+
+                const payload = {
+                    username: settings.websiteName || "ระบบแจ้งลา",
+                    avatar_url: settings.logoImageUrl || "",
+                    embeds: [{
+                        title: "📝 คำขอแจ้งลาใหม่",
+                        description: description,
+                        color: parseInt(settings.themeAccentColor.replace('#', ''), 16),
+                        fields: [
+                            { name: "ประเภทการลา", value: leaveData.leaveTypes.join(', '), inline: true },
+                            { name: "วันที่เริ่มลา", value: leaveData.startDate, inline: true },
+                            { name: "วันที่สิ้นสุด", value: leaveData.endDate, inline: true },
+                            { name: "เหตุผล", value: leaveData.reason, inline: false }
+                        ],
+                        footer: { text: `ส่งโดย: ${user.username}` },
+                        timestamp: new Date().toISOString()
+                    }]
+                };
+                
+                if (settings.webhookUrl) {
+                    await sendDiscordWebhook(settings.webhookUrl, payload);
+                } else {
+                    console.warn("Leave Request Webhook URL is not set in admin settings.");
+                }
+                
+                showMessage(document.getElementById('messageBox'), 'ส่งคำขอลาสำเร็จ!', false);
+                document.getElementById('leaveRequestForm').reset();
+            });
+        });
+    </script>
+</body>
+</html>

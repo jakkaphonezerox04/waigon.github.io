@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="websiteTitle">Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-gray-900">
+    <div class="form-container">
+        <div class="flex justify-center mb-6">
+            <img id="bioniczLogo" src="" alt="Website Logo" class="w-48 rounded-lg">
+        </div>
+
+        <div id="loginForm">
+            <h2 class="form-title"><span class="icon login-icon"></span>เข้าสู่ระบบ</h2>
+            <div class="mb-4">
+                <label for="username" class="form-label">ชื่อผู้ใช้</label>
+                <input type="text" id="username" placeholder="ชื่อผู้ใช้" class="input-field">
+            </div>
+            <div class="mb-6">
+                <label for="password" class="form-label">รหัสผ่าน</label>
+                <input type="password" id="password" placeholder="รหัสผ่าน" class="input-field">
+            </div>
+            
+            <div id="captchaContainer" class="captcha-container animate-pulse">
+                <div class="captcha-checkbox-wrapper">
+                    <input type="checkbox" id="captchaCheckbox" class="captcha-checkbox">
+                    <label id="captchaText" class="captcha-text">ฉันไม่ใช่โปรแกรมอัตโนมัติ</label>
+                </div>
+                <div class="captcha-logo-section">
+                    <div class="captcha-logo"></div>
+                    <span>AD Captcha</span>
+                    <span class="text-xs text-gray-500">ความเป็นส่วนตัว - ข้อกำหนด</span>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-3 mt-4">
+                <button type="button" id="loginBtn" class="button-primary" disabled>เข้าสู่ระบบ</button>
+                <button type="button" id="showRegisterFormBtn" class="button-secondary">สมัครสมาชิก</button>
+            </div>
+            <div id="loginMessageBox" class="message-box"></div>
+        </div>
+
+        <form id="registerForm" class="hidden">
+            <h2 class="form-title">สร้างบัญชีใหม่</h2>
+            <div class="mb-4">
+                <label for="registerUsername" class="form-label">ชื่อผู้ใช้</label>
+                <input type="text" id="registerUsername" placeholder="ตั้งชื่อผู้ใช้ของคุณ" class="input-field" required>
+            </div>
+            <div class="mb-4">
+                <label for="registerPassword" class="form-label">รหัสผ่าน</label>
+                <input type="password" id="registerPassword" placeholder="ตั้งรหัสผ่าน" class="input-field" required>
+            </div>
+            <div class="mb-6">
+                <label for="registerConfirmPassword" class="form-label">ยืนยันรหัสผ่าน</label>
+                <input type="password" id="registerConfirmPassword" placeholder="พิมพ์รหัสผ่านอีกครั้ง" class="input-field" required>
+            </div>
+            <div class="flex flex-col gap-3 mt-4">
+                <button type="button" id="confirmRegisterBtn" class="button-primary">ยืนยันการสมัคร</button>
+                <button type="button" id="backToLoginBtn" class="button-secondary">กลับไปหน้าเข้าสู่ระบบ</button>
+            </div>
+            <div id="registerMessageBox" class="message-box"></div>
+        </form>
+    </div>
+
+    <div id="typingCaptchaModal" class="modal-overlay hidden">
+        <div class="typing-captcha-modal-content">
+            <h3 class="text-xl font-bold mb-4">ยืนยันว่าคุณไม่ใช่โปรแกรมอัตโนมัติ</h3>
+            <p class="text-lg mb-2">กรุณาพิมพ์ข้อความต่อไปนี้:</p>
+            <span id="typingCaptchaText" class="captcha-challenge-text"></span>
+            <input type="text" id="typingCaptchaInput" placeholder="พิมพ์ข้อความที่นี่" class="input-field mt-4 text-center">
+            <div id="typingCaptchaMessageBox" class="message-box"></div>
+            <div class="flex justify-center gap-4 mt-6">
+                <button id="typingCaptchaConfirmBtn" class="button-primary px-6 py-2">ยืนยัน</button>
+                <button id="typingCaptchaCancelBtn" class="button-secondary px-6 py-2">ยกเลิก</button>
+            </div>
+        </div>
+    </div>
+    
+    <footer class="mt-8 py-4 px-6 text-center text-gray-300">
+        <p>© <span id="copyrightYear"></span> <span id="copyrightName"></span></p>
+    </footer>
+
+    <script src="js/shared.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            applyThemeSettings();
+
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            const showRegisterFormBtn = document.getElementById('showRegisterFormBtn');
+            const backToLoginBtn = document.getElementById('backToLoginBtn');
+            const confirmRegisterBtn = document.getElementById('confirmRegisterBtn');
+            const loginBtn = document.getElementById('loginBtn');
+            const loginMessageBox = document.getElementById('loginMessageBox');
+            const registerMessageBox = document.getElementById('registerMessageBox');
+            
+            const captchaContainer = document.getElementById('captchaContainer');
+            const typingCaptchaModal = document.getElementById('typingCaptchaModal');
+            const typingCaptchaText = document.getElementById('typingCaptchaText');
+            const typingCaptchaInput = document.getElementById('typingCaptchaInput');
+            const typingCaptchaConfirmBtn = document.getElementById('typingCaptchaConfirmBtn');
+            const typingCaptchaCancelBtn = document.getElementById('typingCaptchaCancelBtn');
+            const typingCaptchaMessageBox = document.getElementById('typingCaptchaMessageBox');
+            let captchaVerified = false;
+            let captchaTextToType = '';
+
+            showRegisterFormBtn.addEventListener('click', () => {
+                loginForm.classList.add('hidden');
+                registerForm.classList.remove('hidden');
+            });
+
+            backToLoginBtn.addEventListener('click', () => {
+                registerForm.classList.add('hidden');
+                loginForm.classList.remove('hidden');
+            });
+            
+            confirmRegisterBtn.addEventListener('click', async () => {
+                const newUsername = document.getElementById('registerUsername').value.trim();
+                const newPassword = document.getElementById('registerPassword').value;
+                const confirmPassword = document.getElementById('registerConfirmPassword').value;
+                let settings = getSettings();
+
+                if (!newUsername || !newPassword || !confirmPassword) {
+                    return showMessage(registerMessageBox, 'กรุณากรอกข้อมูลให้ครบทุกช่อง', true);
+                }
+                if (newPassword !== confirmPassword) {
+                    return showMessage(registerMessageBox, 'รหัสผ่านไม่ตรงกัน', true);
+                }
+                if (settings.users[newUsername]) {
+                    return showMessage(registerMessageBox, 'ชื่อผู้ใช้นี้มีอยู่แล้ว', true);
+                }
+                settings.users[newUsername] = { password: newPassword, group: 'member' }; 
+                saveSettings(settings);
+
+                if (settings.registrationWebhookUrl) {
+                    const payload = {
+                        username: settings.websiteName || "ระบบสมัครสมาชิก",
+                        avatar_url: settings.logoImageUrl || "", 
+                        embeds: [{
+                            title: "ลงทะเบียนผู้ใช้ใหม่สำเร็จ",
+                            color: parseInt(settings.themeAccentColor.replace('#', ''), 16),
+                            fields: [{ name: "Username", value: `\`${newUsername}\``, inline: true }, { name: "Group", value: "`member`", inline: true }],
+                            timestamp: new Date().toISOString()
+                        }]
+                    };
+                    await sendDiscordWebhook(settings.registrationWebhookUrl, payload);
+                }
+                
+                showMessage(loginMessageBox, `สมัครสมาชิกสำเร็จ! ยินดีต้อนรับ, ${newUsername}.`, false);
+                backToLoginBtn.click();
+                document.getElementById('registerForm').reset();
+            });
+
+            loginBtn.addEventListener('click', () => {
+                if (!captchaVerified) {
+                    return showMessage(loginMessageBox, 'กรุณายืนยัน Captcha ก่อน', true);
+                }
+                const username = document.getElementById('username').value.trim();
+                const password = document.getElementById('password').value;
+                const settings = getSettings();
+                const user = settings.users[username];
+
+                if (user && user.password === password) {
+                    sessionStorage.setItem('loggedInUser', JSON.stringify({ username, group: user.group }));
+                    if (user.group === 'admin' && checkPagePermission(user.group, 'admin.html')) {
+                        window.location.href = 'admin.html';
+                    } else if (user.group === 'staff' && checkPagePermission(user.group, 'staff.html')) {
+                        window.location.href = 'staff.html';
+                    }
+                    else if (user.group === 'member' && checkPagePermission(user.group, 'user.html')) {
+                        window.location.href = 'user.html';
+                    }
+                    else {
+                        showMessage(loginMessageBox, 'คุณไม่มีสิทธิ์เข้าถึงระบบ กรุณาติดต่อผู้ดูแล', true);
+                        sessionStorage.removeItem('loggedInUser');
+                    }
+                } else {
+                    showMessage(loginMessageBox, 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง', true);
+                }
+            });
+
+            function generateTypingCaptcha() {
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                let result = '';
+                for (let i = 0; i < 6; i++) {
+                    result += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                captchaTextToType = result;
+                typingCaptchaText.textContent = captchaTextToType;
+                typingCaptchaInput.value = '';
+                typingCaptchaMessageBox.style.display = 'none';
+            }
+            function openTypingCaptchaModal() {
+                generateTypingCaptcha();
+                typingCaptchaModal.classList.remove('hidden');
+                typingCaptchaInput.focus();
+            }
+            function closeTypingCaptchaModal() {
+                typingCaptchaModal.classList.add('hidden');
+            }
+            function verifyTypingCaptcha() {
+                if (typingCaptchaInput.value === captchaTextToType) {
+                    captchaVerified = true;
+                    loginBtn.disabled = false;
+                    document.getElementById('captchaCheckbox').checked = true;
+                    document.getElementById('captchaText').textContent = 'ยืนยันแล้ว';
+                    captchaContainer.classList.remove('animate-pulse');
+                    closeTypingCaptchaModal();
+                    showMessage(loginMessageBox, 'Captcha ยืนยันสำเร็จ!', false);
+                } else {
+                    showMessage(typingCaptchaMessageBox, 'ข้อความไม่ถูกต้อง ลองใหม่อีกครั้ง', true);
+                    generateTypingCaptcha();
+                }
+            }
+            captchaContainer.addEventListener('click', () => {
+                if (!captchaVerified) openTypingCaptchaModal();
+            });
+            typingCaptchaConfirmBtn.addEventListener('click', verifyTypingCaptcha);
+            typingCaptchaCancelBtn.addEventListener('click', closeTypingCaptchaModal);
+        });
+    </script>
+</body>
+</html>
