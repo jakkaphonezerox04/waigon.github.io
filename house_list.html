@@ -180,8 +180,8 @@
             let currentEditingMemberIndex = -1;
 
             function renderHouseMembers() {
-                // โค้ดนี้ได้รับการแก้ไขเป็น getHouseList() แล้ว
-                const members = getHouseList(); 
+                // แก้ไขการเรียกฟังก์ชันเป็น gethouselist() (ตัว l เล็ก)
+                const members = gethouselist(); 
                 if (members.length === 0) {
                     houseMembersList.innerHTML = '<p class="text-center text-gray-500">ยังไม่มีสมาชิก</p>';
                     return;
@@ -223,7 +223,7 @@
                     return;
                 }
 
-                const members = getHouseList();
+                const members = gethouselist(); // เปลี่ยนเป็น gethouselist()
                 members.push({ name, gender, weapon, isOnline });
                 saveHouseList(members);
                 renderHouseMembers();
@@ -239,7 +239,7 @@
                 const index = parseInt(e.target.dataset.index);
                 if (isNaN(index)) return;
 
-                let members = getHouseList();
+                let members = gethouselist(); // เปลี่ยนเป็น gethouselist()
 
                 if (e.target.classList.contains('delete-member-btn')) {
                     if (confirm('คุณแน่ใจหรือไม่ว่าต้องการลบสมาชิกนี้?')) {
@@ -280,7 +280,7 @@
                     return;
                 }
 
-                let members = getHouseList();
+                let members = gethouselist(); // เปลี่ยนเป็น gethouselist()
                 members[currentEditingMemberIndex] = { name, gender, weapon, isOnline };
                 saveHouseList(members);
                 renderHouseMembers();
